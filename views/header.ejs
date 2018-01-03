@@ -5,10 +5,40 @@
     <title><%= blog.title %></title>
     <link rel="stylesheet" href="//cdn.bootcss.com/semantic-ui/2.1.8/semantic.min.css">
     <link rel="stylesheet" href="/css/style.css">
-    <script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
-    <script src="//cdn.bootcss.com/semantic-ui/2.1.8/semantic.min.js"></script>
   </head>
   <body>
-  <%- include('components/nav') %>
-  <%- include('components/nav-setting') %>
-  <%- include('components/notification') %>
+    <script type='text/template' id='tpl'>
+      <%
+        var intSumScore = 0, intAveScore = 0; 
+        for(var i = 0; i < list.length; i++){
+          var item = list[i];
+      %>
+      <li>
+        <span><%=item.StuId%></span>
+        <span><%=item.Name%></span>
+        <span><%=item.Sex%></span>
+        <span><%=item.Score%></span>
+      </li>
+      <%
+        intSumScore += parseInt(item.Score);
+        intAveScore = Math.round(intSumScore/list.length);
+        }
+      %>
+      <li>
+        <span>平均分: </span>
+        <span><%=intAveScore%></span>
+        <span>总分: </span>
+        <span><%=intSumScore%></span>
+      </li>
+    </script>
+    <ul id='element'>
+      <li>
+        <span>学号 </span>
+        <span>姓名 </span>
+        <span>性别 </span>
+        <span>总分 </span>
+      </li>
+    </ul>
+    <script data-main='main' type="text/javascript" src="/deps/require.js"></script>
+  </body>
+</html>

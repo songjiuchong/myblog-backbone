@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title><%= blog.title %></title>
+    <link rel="stylesheet" href="//cdn.bootcss.com/semantic-ui/2.1.8/semantic.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+  </head>
+  <body>
+    <script type='text/template' id='tpl'>
+
+      <div class="nav">
+        <div class="ui grid">
+          <div class="four wide column"></div>
+
+          <div class="eight wide column">
+            <a href="/posts"><h1><%= blog.title %></h1></a>
+            <p><%= blog.description %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-setting">
+        <div class="ui buttons">
+          <div class="ui floating dropdown button">
+            <i class="icon bars"></i>
+            <div class="menu">
+              <% if (user) { %>
+                <a class="item" href="/posts?author=<%= user._id %>">个人主页</a>
+                <div class="divider"></div>
+                <a class="item" href="/posts/create">发表文章</a>
+                <a class="item" href="/signout">登出</a>
+              <% } else { %>
+                <a class="item" href="/signin">登录</a>
+                <a class="item" href="/signup">注册</a>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ui grid">
+        <div class="four wide column"></div>
+        <div class="eight wide column">
+
+        <% if (success) { %>
+          <div class="ui success message">
+            <p><%= success %></p>
+          </div>
+        <% } %>
+
+        <% if (error) { %>
+          <div class="ui error message">
+            <p><%= error %></p>
+          </div>
+        <% } %>
+
+        </div>
+      </div>
+
+
+
+      <div><%=router%></div>
+
+
+    </script>
+    <div id='element'>
+
+    </div>
+    <script data-main='main' type="text/javascript" src="/deps/r.js"></script>
+  </body>
+</html>

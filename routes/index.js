@@ -1,5 +1,7 @@
 module.exports = function (app) {
   
+  var PostModel = require('../models/posts')
+
   app.get('/userKeyInfo',function(req, res, next){
     req.ifAjax = true;
     reqJson = {};
@@ -13,6 +15,21 @@ module.exports = function (app) {
     res.write(JSON.stringify(reqJson));
     res.end();
     next();
+  })
+
+  app.get('/getPosts', function (req, res, next) {
+    const author = req.query.author
+
+    PostModel.getPosts(author)
+      .then(function (posts) {
+        req.ifAjax = true;
+        reqJson = {};
+        reqJson.posts = posts;
+        res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+        res.write(JSON.stringify(reqJson));
+        res.end();
+      })
+      .catch(next)
   })
 
   app.use(function (req, res, next) {

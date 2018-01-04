@@ -51,29 +51,40 @@ require(['backbone','semantic'],function(){
         //常量设置;
         const title = 'myblog';
         const description = 'my blog project';
-
+        
+        //template;
+        var tpl = $('#tpl').html(); //todo, 通过ajax从服务器获取template的内容;
 
         //Backbone MVC;
         
-        window.blogModel = Backbone.Model.extend({
+        window.blogUser = Backbone.Model.extend({
           url:'/userKeyInfo',
           defaults:{
-            user:{},
+            user:null,
             success:'',
             error:'',
-            router:'',
-            blog:{}
+            blog:null
           }
+        });
+        
+        //blogCollection中指定model为blogPost只是为了在fetch时先初始化实例对象中的项和验证fetch获得的项的合法性, 而fetch相关的操作通过blogCollection指定的url就能完成, 所以blogPost中无须设置url;
+        window.blogPost = Backbone.Model.extend({
+          // defaults:{
+          //   author:'',
+          //   title:'',
+          //   content:'',
+          //   pv:0
+          // }
         });
 
         window.blogCollection = Backbone.Collection.extend({
-          model:blogModel
+          url:'/getPosts',
+          model:blogPost
         });
 
-        var tpl = $('#tpl').html(); //todo, 通过ajax从服务器获取template的内容;
         window.blogView = Backbone.View.extend({
           el:$('body'),
-          model:blogModel,
+          model:blogUser,
           template:_.template(tpl),
           initialize:function(){
             this.render();
@@ -82,14 +93,42 @@ require(['backbone','semantic'],function(){
             var newModel = new this.model(
                 {blog:{title:title, description:description}}
             );
-            newModel.fetch({
-                    success:function(model,response){
-                    },
-                    error:function(error){
-                    }
+            var blogUserDone = new Promise(function(resolve, reject){
+                newModel.fetch({
+                        success:function(model,response,options){
+                            resolve('blogUserDone');
+                        },
+                        error:function(error){
+                            //前端报错通过ajax传到后端, 后端接收后使用next()传递给错误处理中间件; 
+                        }
+                });
             });
-            var content = this.template(newModel.toJSON());
-            $('#element').append(content);
+            
+            var newPosts = new blogCollection();
+            var blogCollectionDone = new Promise(function(resolve, reject){
+                newPosts.fetch({
+                    success:function(collection,resp,options){
+                        resolve('blogCollectionDone');
+                    },error:function(error){
+                      //前端报错通过ajax传到后端, 后端接收后使用next()传递给错误处理中间件; 
+                    }
+                });
+            });
+            
+            Promise.all([blogUserDone,blogCollectionDone]).then(function(dones){
+                var finalData = newModel.toJSON();
+                finalData.posts = [];
+                console.log(newPosts.models[0].attributes.posts);
+                for(var i=0; i<newPosts.models[0].attributes.posts.length; i++){
+                       finalData.posts[i] = newPosts.models[0].attributes.posts[i];
+                }
+                var content = App.template(finalData);
+                $('#element').append(content);
+                afterRenderProcess();
+            }).catch(function(reason){
+                //前端报错通过ajax传到后端, 后端接收后使用next()传递给错误处理中间件; 
+            });
+
           }
         });
         
@@ -138,23 +177,27 @@ require(['backbone','semantic'],function(){
         var router = new router();
         Backbone.history.start();   
         
-        // 延时清除掉成功、失败提示信息
-        if ($('.ui.success.message').length > 0) {
-          $('.ui.success.message').fadeOut(3000)
-        } else if ($('.ui.error.message').length > 0) {
-          $('.ui.error.message').fadeOut(3000)
+        //在页面加载完毕后执行的内容;
+        function afterRenderProcess(){
+            // 延时清除掉成功、失败提示信息
+            if ($('.ui.success.message').length > 0) {
+              $('.ui.success.message').fadeOut(3000)
+            } else if ($('.ui.error.message').length > 0) {
+              $('.ui.error.message').fadeOut(3000)
+            }
+
+            //  点击按钮弹出下拉框
+            console.log($('.ui.dropdown').length);
+            $('.ui.dropdown').dropdown();
+
+            // 鼠标悬浮在头像上，弹出气泡提示框
+            $('.post-content .avatar-link').popup({
+              inline: true,
+              position: 'bottom right',
+              lastResort: 'bottom right'
+            });
         }
-
-        //  点击按钮弹出下拉框
-        console.log($('.ui.dropdown').length);
-        $('.ui.dropdown').dropdown();
-
-        // 鼠标悬浮在头像上，弹出气泡提示框
-        $('.post-content .avatar-link').popup({
-          inline: true,
-          position: 'bottom right',
-          lastResort: 'bottom right'
-        });
+        
 
     });
 });

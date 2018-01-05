@@ -19,10 +19,10 @@ module.exports = function (app) {
 
   app.get('/getPosts', function (req, res, next) {
     const author = req.query.author
+    req.ifAjax = true;
 
     PostModel.getPosts(author)
       .then(function (posts) {
-        req.ifAjax = true;
         reqJson = {};
         reqJson.posts = posts;
         res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});

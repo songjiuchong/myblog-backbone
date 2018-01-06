@@ -1,6 +1,8 @@
 module.exports = function (app) {
   
   var PostModel = require('../models/posts')
+  var UserModel = require('../models/users')
+  const sha1 = require('sha1')
 
   app.get('/userKeyInfo',function(req, res, next){
     req.ifAjax = true;
@@ -25,6 +27,42 @@ module.exports = function (app) {
       .then(function (posts) {
         reqJson = {};
         reqJson.posts = posts;
+        res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+        res.write(JSON.stringify(reqJson));
+        res.end();
+      })
+      .catch(next)
+  })
+
+  app.post('/validateSignin', function (req, res, next) {
+      const name = req.fields.name
+      const password = req.fields.password
+      req.ifAjax = true;
+
+      UserModel.getUserByName(name)
+      .then(function (user) {
+        if (!user) {
+          req.flash('error', '用户不存在')
+          reqJson = {error:'用户不存在'};
+          res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+          res.write(JSON.stringify(reqJson));
+          res.end();
+          return; //这里必须return, 不然会继续执行之后的内容从而报错: TypeError: Cannot read property 'password' of null;
+        }
+        // 检查密码是否匹配
+        if (sha1(password) !== user.password) {
+          req.flash('error', '用户名或密码错误')
+          reqJson = {error:'用户名或密码错误'};
+          res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+          res.write(JSON.stringify(reqJson));
+          res.end();
+          return;
+        }
+        req.flash('success', '登录成功')
+        // 用户信息写入 session
+        delete user.password
+        req.session.user = user
+        reqJson = {success:'登录成功', user:user};
         res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
         res.write(JSON.stringify(reqJson));
         res.end();

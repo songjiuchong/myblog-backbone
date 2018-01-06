@@ -1,0 +1,6 @@
+define([],function(){
+	return {"html":"<div class='nav'><div class='ui grid'><div class='four wide column'></div><div class='eight wide column'><a href='posts'><h1><%= blog.title %></h1></a><p><%= blog.description %></p></div></div></div><div class='nav-setting'><div class='ui buttons'><div class='ui floating dropdown button'><i class='icon bars'></i><div class='menu'><% if (user) { %><a class='item' id='mainPage' href='posts?author=<%= user._id %>'>个人主页</a><div class='divider'></div><a class='item' id='postPara' href='posts/create'>发表文章</a><a class='item' id='signOut' href='signout'>登出</a><% } else { %><a class='item' id='signIn' href='signin'>登录</a><a class='item' id='signUp' href='signup'>注册</a><% } %></div></div></div></div><div class='ui grid'><div class='four wide column'></div><div class='eight wide column'><% if (success) { %><div class='ui success message'><p><%= success %></p></div><% } %><% if (error) { %><div class='ui error message'><p><%= error %></p></div><% } %></div></div>"}
+
+})
+
+//这里使用了khaki工具将指定template模板的html内容转换为字符串的形式, 并且为了让_.template()能够正确识别, 这里手动将\'转换为了", 将\n删除了;

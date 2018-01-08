@@ -55,38 +55,6 @@ require(['backbone','semantic'],function(){
         //template;
         window.tpl = '';
 
-        //Backbone MVC;
-        
-        window.blogUser = Backbone.Model.extend({
-          url:'/userKeyInfo',
-          defaults:{
-            user:null,
-            success:'',
-            error:'',
-            blog:null
-          }
-        });
-        
-        //blogCollection中指定model为blogPost只是为了在fetch时先初始化实例对象中的项和验证fetch获得的项的合法性, 而fetch相关的操作通过blogCollection指定的url就能完成, 所以blogPost中无须设置url;
-        window.blogPost = Backbone.Model.extend({
-          // defaults:{
-          //   author:'',
-          //   title:'',
-          //   content:'',
-          //   pv:0
-          // }
-        });
-
-        window.blogCollection = Backbone.Collection.extend({
-          url:'/getPosts',
-          model:blogPost,
-          initialize:function(authorid){
-            if(authorid){
-                this.url = this.url + '?' + authorid;
-            }
-          }
-        });
-
         require(['router/router'],function(newRouter){
             router = newRouter;
             Backbone.history.start({pushState: true}); //必须在定义了router之后才能开始监听, 不然监听的规则与router设置无关;

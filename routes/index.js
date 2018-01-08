@@ -1,10 +1,15 @@
 module.exports = function (app) {
+
   process.setMaxListeners(0);
+
   var PostModel = require('../models/posts')
   var UserModel = require('../models/users')
   const fs = require('fs')
   const path = require('path')
   const sha1 = require('sha1')
+
+
+  //Ajax calls;
 
   app.get('/userKeyInfo',function(req, res, next){
     req.ifAjax = true;
@@ -159,6 +164,8 @@ module.exports = function (app) {
     next();
   })
 
+
+  //For get source page;
   app.use(function (req, res, next) {
       if(!req.ifAjax){
         var clientui = require('fs').readFileSync('views/myblogIni.html');

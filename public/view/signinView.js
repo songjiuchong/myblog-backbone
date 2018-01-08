@@ -1,4 +1,4 @@
-define(['afterRenderProcess'],function(afterRenderProcess){
+define(['afterRenderProcess','model/blogUser'],function(afterRenderProcess,blogUser){
 
   return Backbone.View.extend({
        el:$('body'),

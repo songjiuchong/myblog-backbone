@@ -50,7 +50,18 @@ define([],function(){
                     window.App = new signinView();
                 });
           },
-          signout:function(key){
+          signout:function(){
+                $.ajax({
+                    type: 'GET',
+                    url: 'validateSignout',
+                    dataType: 'json',
+                    cache: false
+                }).done(function(data){
+                    if(data && data.success){
+                        newRouter.navigate('/posts', true);
+                    }
+                });
+                
           },
           signup:function(){
                 require(['template/component/header','template/signup','view/signupView'],function(header,signup,signupView){

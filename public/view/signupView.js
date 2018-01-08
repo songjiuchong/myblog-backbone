@@ -23,13 +23,13 @@ define(['afterRenderProcess'],function(afterRenderProcess){
                 });
             }).then(function(done){
                 var finalData = newModel.toJSON();
-                if(newModel.attributes.user && newModel.attributes.user._id){ //如果用户已经处于登录状态;
-                  router.navigate('posts?author=' + newModel.attributes.user._id, true);
-                }else{
+                // if(newModel.attributes.user && newModel.attributes.user._id){ //如果用户已经处于登录状态;
+                //   router.navigate('posts?author=' + newModel.attributes.user._id, true);
+                // }else{
                   var content = App.template(finalData);
                   $('#element').empty().append(content);
                   afterRenderProcess();
-                }
+                // }
                 
             }).catch(function(reason){
                 //前端报错通过ajax传到后端, 后端接收后使用next()传递给错误处理中间件; 

@@ -1,11 +1,17 @@
 define('model/blogPost',[],function(){
 
   return Backbone.Model.extend({
-          // defaults:{
-          //   author:'',
-          //   title:'',
-          //   content:'',
-          //   pv:0
-          // }
+  		url:'/getPost',
+  		initialize:function(postId){
+            if(postId){
+                this.url = this.url + '?' + 'postId=' + postId;
+            }
+          }
+         // defaults:{
+         //   author:'',
+         //   title:'',
+         //   content:'',
+         //   pv:0
+         // }
   });
 })

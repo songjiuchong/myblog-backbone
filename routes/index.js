@@ -4,6 +4,7 @@ module.exports = function (app) {
 
   var PostModel = require('../models/posts')
   var UserModel = require('../models/users')
+  var CommentsModel = require('../models/comments')
   const fs = require('fs')
   const path = require('path')
   const sha1 = require('sha1')
@@ -24,6 +25,77 @@ module.exports = function (app) {
     res.write(JSON.stringify(reqJson));
     res.end();
     next();
+  })
+  
+  app.get('/getPost', function (req, res, next) {
+    const postId = req.query.postId;
+    req.ifAjax = true;
+
+    PostModel.getPostById(postId)
+      .then(function (post) {
+        reqJson = {};
+        reqJson.post = post;
+        res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+        res.write(JSON.stringify(reqJson));
+        res.end();
+        next();
+      })
+      .catch(next)
+  })
+
+  app.get('/getComments', function (req, res, next) {
+    const postId = req.query.postId;
+    req.ifAjax = true;
+
+    CommentsModel.getComments(postId)
+      .then(function (comments) {
+        reqJson = {};
+        reqJson.comments = comments;
+        res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+        res.write(JSON.stringify(reqJson));
+        res.end();
+        next();
+      })
+      .catch(next)
+  })
+
+  app.post('/createComment', function (req, res, next) {
+  const author = req.session.user._id
+  const postId = req.fields.postId
+  const content = req.fields.content
+  req.ifAjax = true;
+
+    // 校验参数
+    try {
+      if (!content.length) {
+        throw new Error('请填写留言内容')
+      }
+    } catch (e) {
+          reqJson = {error:e.message};
+          req.flash('error', e.message)
+          res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+          res.write(JSON.stringify(reqJson));
+          res.end();
+          return;
+    }
+
+    const comment = {
+      author: author,
+      postId: postId,
+      content: content
+    }
+
+    CommentsModel.create(comment)
+      .then(function () {
+        req.flash('success', '留言成功')
+        reqJson = {success:'留言成功'};
+        reqJson.postId = postId;
+        res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+        res.write(JSON.stringify(reqJson));
+        res.end();
+        next();
+      })
+      .catch(next)
   })
 
   app.get('/getPosts', function (req, res, next) {

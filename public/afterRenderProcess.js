@@ -11,7 +11,7 @@ define([],function(){
             });
             
           
-            $('form').submit(function(e){
+            $('form.segment').submit(function(e){
                 e.preventDefault(); // This is important
                 
                 //公共验证部分;
@@ -75,7 +75,35 @@ define([],function(){
                 }
 
             });
-    
+
+            $('form.reply').submit(function(e){
+                e.preventDefault(); // This is important
+                
+                $.ajax({
+                    url:'createComment',
+                    type: "POST",             // Type of request to be send, called as method
+                    data: new FormData(this), // Data sent to server, a set of key/value pairs (i.e. form fields and values)
+                    contentType: false,       // The content type used when sending data to the server.
+                    cache: false,             // To unable request pages to be cached
+                    processData:false,        // To send DOMDocument or non processed data file it is set to false
+                    success: function(data)   // A function to be called if request succeeds
+                    {
+                      if(data && data.error){
+                        var content = '<div class="ui error message"><p>' + data.error + '</p></div>';
+                        $('.ui.grid:eq(1) .eight.wide.column').empty().append(content);
+                      }else if(data && data.success){
+                        debugger;
+                        var content = '<div class="ui success message"><p>' + data.success + '</p></div>';
+                        $('.ui.grid:eq(1) .eight.wide.column').empty().append(content);
+                        Backbone.history.fragment = null;
+                        // router.navigate('/posts?post=' + data.postId, {trigger: true});
+                        router.navigate('/posts?post=' + data.postId, true);
+                      }
+                    }
+                });
+            });
+
+
             // $(document).on("click", "form input.ui.button", function(e){
             //     e.preventDefault(); // This is important
                 

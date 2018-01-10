@@ -1,14 +1,15 @@
-define([],function(){
+define(['template/component/header','template/post','view/postView'],function(headerModule,postModule,postViewModule){
     //路由;
         var router = Backbone.Router.extend({
           routes:{
             '':'init',
             'posts':'posts',
             'posts?author=:authorid':'posts',
-            'posts/create':'posts_create',
-            'posts/:postId':'posts_Id',
-            'posts/:postId/edit':'posts_Id_edit',
-            'posts/:postId/remove':'posts_Id_remove',
+            // 'posts/create':'posts_create',
+            // 'posts/:postId':'posts_Id',
+            'posts?post=:postId':'posts',
+            // 'posts/:postId/edit':'posts_Id_edit',
+            // 'posts/:postId/remove':'posts_Id_remove',
             'signin':'signin',
             'signout':'signout',
             'signup':'signup',
@@ -18,23 +19,32 @@ define([],function(){
               location.href = '/posts';
           },
           posts:function(authorid){
-            require(['template/component/header','template/posts','view/blogView'],function(header,posts,blogView){
-                var tplHeader  = header.html;
-                var tplPosts  =  posts.html;
-                tpl = tplHeader + tplPosts;
-                if(authorid){
-                    window.App = new blogView(authorid);
-                }else{
-                    window.App = new blogView();
-                }
-            });
-            
+            if(authorid && !authorid.startsWith('post=')){
+              require(['template/component/header','template/posts','view/blogView'],function(header,posts,blogView){
+                  var tplHeader  = header.html;
+                  var tplPosts  =  posts.html;
+                  tpl = tplHeader + tplPosts;
+                  window.App = new blogView(authorid);
+              });
+            }else if(authorid && authorid.startsWith('post=')){
+                  var tplHeader  = headerModule.html;
+                  var tplPost  =  postModule.html;
+                  tpl = tplHeader + tplPost;
+                  window.App = new postViewModule(authorid.slice(5)); //截取post=后的字符串;
+            }else{
+                  require(['template/component/header','template/posts','view/blogView'],function(header,posts,blogView){
+                  var tplHeader  = header.html;
+                  var tplPosts  =  posts.html;
+                  tpl = tplHeader + tplPosts;
+                  window.App = new blogView();
+              });
+            }
           },
           posts_create:function(){
 
           },
-          posts_Id:function(id){
-
+          posts_Id:function(postId){
+                
           },
           posts_Id_edit:function(id){
 

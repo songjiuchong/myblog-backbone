@@ -1,15 +1,16 @@
-define(['template/component/header','template/post','view/postView'],function(headerModule,postModule,postViewModule){
+define(['template/component/header','template/post','view/postView','template/createPost','view/createPostView'],function(headerModule,postModule,postViewModule,createPostModule,createPostView){
     //路由;
         var router = Backbone.Router.extend({
           routes:{
             '':'init',
             'posts':'posts',
             'posts?author=:authorid':'posts',
-            // 'posts/create':'posts_create',
             // 'posts/:postId':'posts_Id',
             'posts?post=:postId':'posts',
+            'posts/create':'posts_create',
             // 'posts/:postId/edit':'posts_Id_edit',
-            // 'posts/:postId/remove':'posts_Id_remove',
+            'posts/:postId/remove':'removePost',
+            'comments/:commentId/remove':'removeComment',
             'signin':'signin',
             'signout':'signout',
             'signup':'signup',
@@ -41,7 +42,10 @@ define(['template/component/header','template/post','view/postView'],function(he
             }
           },
           posts_create:function(){
-
+              var tplHeader  = headerModule.html;
+              var tplPost  =  createPostModule.html;
+              tpl = tplHeader + tplPost;
+              window.App = new createPostView();
           },
           posts_Id:function(postId){
                 
@@ -49,8 +53,34 @@ define(['template/component/header','template/post','view/postView'],function(he
           posts_Id_edit:function(id){
 
           },
-          posts_Id_remove:function(id){
-
+          removePost:function(postId){
+                $.ajax({
+                    type: 'GET',
+                    url: '/removePost?postId=' + postId,
+                    dataType: 'json',
+                    cache: false
+                }).done(function(data){
+                    if(data && data.success){
+                        var newHref = '/posts?author=' + data.author;
+                        Backbone.history.fragment = null;
+                        newRouter.navigate(newHref, true);
+                    }
+                });
+          },
+          removeComment:function(commentId){
+                $.ajax({
+                    type: 'GET',
+                    url: '/removeComment?commentId=' + commentId,
+                    dataType: 'json',
+                    cache: false
+                }).done(function(data){
+                    if(data && data.success){
+                        var newQuery = $('.post-content .ui.segment h3 a').attr('href').slice(12);
+                        var newHref = '/posts?post=' + newQuery;
+                        Backbone.history.fragment = null;
+                        newRouter.navigate(newHref, true);
+                    }
+                });
           },
           signin:function(){
                 require(['template/component/header','template/signin','view/signinView'],function(header,signin,signinView){

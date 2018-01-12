@@ -11,7 +11,8 @@ module.exports = function (app) {
 
 
   //Ajax calls;
-
+  
+  //获取登录用户的信息;
   app.get('/userKeyInfo',function(req, res, next){
     req.ifAjax = true;
     reqJson = {};
@@ -27,6 +28,7 @@ module.exports = function (app) {
     next();
   })
   
+  //获取某篇文章;
   app.get('/getPost', function (req, res, next) {
     const postId = req.query.postId;
     req.ifAjax = true;
@@ -43,6 +45,90 @@ module.exports = function (app) {
       .catch(next)
   })
 
+  //发表一篇文章;
+  app.post('/createPost', function (req, res, next) {
+    req.ifAjax = true;
+    const author = req.session.user._id
+    const title = req.fields.title
+    const content = req.fields.content
+    var reqJson = {};
+    // 校验参数
+    try {
+      if (!title.length) {
+        throw new Error('请填写标题')
+      }
+      if (!content.length) {
+        throw new Error('请填写内容')
+      }
+    } catch (e) {
+          req.flash('error', e.message);
+          reqJson = {error:e.message};
+          res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+          res.write(JSON.stringify(reqJson));
+          res.end();
+          return;
+    }
+
+    let post = {
+      author: author,
+      title: title,
+      content: content,
+      pv: 0
+    }
+
+    PostModel.create(post)
+      .then(function (result) {
+        // 此 post 是插入 mongodb 后的值，包含 _id
+        post = result.ops[0]
+        req.flash('success', '发表成功')
+        reqJson = {success:'发表成功'};
+        reqJson.post = post;
+        res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+        res.write(JSON.stringify(reqJson));
+        res.end();
+        next();
+      })
+      .catch(next)
+})
+  
+  //删除一篇文章;
+  app.get('/removePost', function (req, res, next) {
+    req.ifAjax = true;
+    const postId = req.query.postId
+    const author = req.session.user._id
+
+    PostModel.getRawPostById(postId)
+      .then(function (post) {
+      try {
+          if (!post) {
+            throw new Error('文章不存在')
+          }
+          if (post.author._id.toString() !== author.toString()) {
+            throw new Error('没有权限')
+          }
+      } catch (e) {
+          req.flash('error', e.message);
+          reqJson = {error:e.message};
+          res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+          res.write(JSON.stringify(reqJson));
+          res.end();
+          return;
+      }
+        PostModel.delPostById(postId)
+          .then(function () {
+            req.flash('success', '删除文章成功')
+            reqJson = {success:'删除文章成功'};
+            reqJson.author = author;
+            res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+            res.write(JSON.stringify(reqJson));
+            res.end();
+            next();
+          })
+          .catch(next)
+      }).catch(next)
+  })
+  
+  //获取某篇文章的所有评论;
   app.get('/getComments', function (req, res, next) {
     const postId = req.query.postId;
     req.ifAjax = true;
@@ -58,7 +144,8 @@ module.exports = function (app) {
       })
       .catch(next)
   })
-
+  
+  //添加新评论;
   app.post('/createComment', function (req, res, next) {
   const author = req.session.user._id
   const postId = req.fields.postId
@@ -96,6 +183,38 @@ module.exports = function (app) {
         next();
       })
       .catch(next)
+  })
+  
+  //删除评论;
+  app.get('/removeComment',function(req, res, next){
+    req.ifAjax = true;
+    const commentId = req.query.commentId;
+    const author = req.session.user._id;
+
+    CommentsModel.getCommentById(commentId)
+    .then(function (comment) {
+      if (!comment) {
+        throw new Error('留言不存在')
+      }
+      if (comment.author.toString() !== author.toString()) {
+        throw new Error('没有权限删除留言')
+      }
+      CommentsModel.delCommentById(commentId)
+        .then(function () {
+          req.flash('success', '删除留言成功')
+          // 删除成功后跳转到上一页
+          res.redirect('back')
+        })
+        .catch(next)
+    }).catch(next)
+
+    reqJson = {};
+    req.flash('success', '留言已删除');
+    reqJson = {success:'留言已删除'};
+    res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+    res.write(JSON.stringify(reqJson));
+    res.end();
+    next();
   })
 
   app.get('/getPosts', function (req, res, next) {
@@ -242,11 +361,11 @@ module.exports = function (app) {
       if(!req.ifAjax){
         var clientui = require('fs').readFileSync('views/myblogIni.html');
         //cors settings;   
-        var origin = (req.headers.origin || "*");  
-        res.setHeader('Access-Control-Allow-Credentials', true); 
-        res.setHeader('Access-Control-Allow-Origin', origin);     
-        res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers','accept, content-type');
+        // var origin = (req.headers.origin || "*");  
+        // res.setHeader('Access-Control-Allow-Credentials', true); 
+        // res.setHeader('Access-Control-Allow-Origin', origin);     
+        // res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+        // res.setHeader('Access-Control-Allow-Headers','accept, content-type');
         
         res.writeHead(200,{'Content-Type':'text/html;charset=utf-8;'}); //注意, 如果这里不添加charset=utf-8响应, 页面会显示中文乱码;
         res.write(clientui);

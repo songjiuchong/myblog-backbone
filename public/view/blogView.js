@@ -41,7 +41,12 @@ define(['afterRenderProcess','model/blogUser','collection/blogCollection'],funct
                        finalData.posts[i] = newPosts.models[0].attributes.posts[i];
                 }
                 var content = App.template(finalData);
-                $('#element').empty().append(content);
+                //上一句中的template方法以及将模板中的内容进行了转义, 所以这里需要将类似: &lt;p&gt;123&lt;/p&gt; 转换为<p>123</p>
+                function escape2Html(str) { 
+                 var arrEntities={'lt':'<','gt':'>','nbsp':' ','amp':'&','quot':'"'}; 
+                 return str.replace(/&(lt|gt|nbsp|amp|quot);/ig,function(all,t){return arrEntities[t];}); 
+                } 
+                $('#element').empty().append(escape2Html(content));
                 afterRenderProcess();
             }).catch(function(reason){
                 //前端报错通过ajax传到后端, 后端接收后使用next()传递给错误处理中间件; 

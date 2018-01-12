@@ -10,6 +10,13 @@
     <div id='element'>
 
     </div>
-    <script data-main='main' type="text/javascript" src="/deps/r.js"></script>
+    <script>
+      var require = {
+          baseUrl: "/"
+      };
+    </script>
+    <!-- <script data-main="main" type="text/javascript" src="/deps/r.js"></script> -->
+    <script type="text/javascript" src="/deps/r.js"></script>
+    <script>requirejs.config({waitSeconds: 200}); require(['main']);</script>
   </body>
 </html>

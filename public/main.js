@@ -1,28 +1,29 @@
+
 require.config({
-    baseUrl:'',
-    paths:{
-        'underscore':'/deps/underscore-min',
-        'backbone':'/deps/backbone-min',
-        'jquery':'/deps/jquery.min',
-        'semantic':'/deps/semantic.min'
-    },
-    shim:{
-        'semantic':{
-            deps:['jquery'],
-            exports:'semantic'
-        },
-        'jquery':{
-            exports:'$'
-        },
-        'underscore':{
-            exports:'_'
-        },
-        'backbone':{
-            deps:['underscore'],
-            exports:'Backbone'
-        }
-    }
-});
+          baseUrl:'',
+          paths:{
+              'underscore':'/deps/underscore-min',
+              'backbone':'/deps/backbone-min',
+              'jquery':'/deps/jquery.min',
+              'semantic':'/deps/semantic.min'
+          },
+          shim:{
+              'semantic':{
+                  deps:['jquery'],
+                  exports:'semantic'
+              },
+              'jquery':{
+                  exports:'$'
+              },
+              'underscore':{
+                  exports:'_'
+              },
+              'backbone':{
+                  deps:['underscore'],
+                  exports:'Backbone'
+              }
+          }
+      });
 
 require(['backbone','semantic'],function(){
 

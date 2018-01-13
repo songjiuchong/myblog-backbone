@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title><%= blog.title %></title>
+    <link rel="stylesheet" href="//cdn.bootcss.com/semantic-ui/2.1.8/semantic.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+  </head>
+  <body>
+    <div id='element'>
+
+    </div>
+    <script>
+      var require = {
+          baseUrl: "/"
+      };
+    </script>
+    <!-- <script data-main="main" type="text/javascript" src="/deps/r.js"></script> -->
+    <script type="text/javascript" src="/deps/r.js"></script>
+    <script>requirejs.config({waitSeconds: 200}); require(['main']);</script>
+  </body>
+</html>

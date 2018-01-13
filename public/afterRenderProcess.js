@@ -9,16 +9,16 @@ define([],function(){
                 var href = $(e.currentTarget).attr('href');
                 if(href.indexOf('remove') != -1){  //如果是删除操作先询问操作者;
                   $('div.warning').fadeIn();
+                  $('div.warning .confirm').on("click", function(e){
+                         $('div.warning').fadeOut();
+                         router.navigate(href, true);
+                        });
+                  $('div.warning .deny').on("click", function(e){
+                         $('div.warning').fadeOut();
+                  });
                 }else{
                   router.navigate(href, true);
                 }
-            });
-            $('div.warning .confirm').on("click", function(e){
-                   var href = $(e.currentTarget).attr('href');
-                   router.navigate(href, true);
-                  });
-            $('div.warning .deny').on("click", function(e){
-                   $('div.warning').fadeOut();
             });
 
             $('form.segment').submit(function(e){

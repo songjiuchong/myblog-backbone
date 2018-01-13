@@ -1,5 +1,5 @@
 # myblog-backbone
-myblog web app based on Backbone.js, node.js(Express), semantic-ui and mongoDB.
+myblog web app based on Backbone.js, underscore.js, node.js(Express), semantic-ui and mongoDB.
 
 In this branch(master), all the settings of this reop are set to let visitor visit this web app on heroku cloud server(https://songjiuchongblog2.herokuapp.com/posts) with cloud-hosted MongoDB service(mLab: https://mlab.com/databases/songjiuchong#collections) used to save user data. 
 

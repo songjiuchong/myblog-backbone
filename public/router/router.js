@@ -1,14 +1,13 @@
-define(['template/component/header','template/post','view/postView','template/createPost','view/createPostView'],function(headerModule,postModule,postViewModule,createPostModule,createPostView){
+define(['template/component/header','template/post','view/postView','template/createPost','view/createPostView','template/editPost','view/editPostView'],function(headerModule,postModule,postViewModule,createPostModule,createPostView,editPostModule,editPostView){
     //路由;
         var router = Backbone.Router.extend({
           routes:{
             '':'init',
             'posts':'posts',
             'posts?author=:authorid':'posts',
-            // 'posts/:postId':'posts_Id',
             'posts?post=:postId':'posts',
             'posts/create':'posts_create',
-            // 'posts/:postId/edit':'posts_Id_edit',
+            'posts/:postId/edit':'editPost',
             'posts/:postId/remove':'removePost',
             'comments/:commentId/remove':'removeComment',
             'signin':'signin',
@@ -47,11 +46,11 @@ define(['template/component/header','template/post','view/postView','template/cr
               tpl = tplHeader + tplPost;
               window.App = new createPostView();
           },
-          posts_Id:function(postId){
-                
-          },
-          posts_Id_edit:function(id){
-
+          editPost:function(postId){
+              var tplHeader  = headerModule.html;
+              var tplPost  =  editPostModule.html;
+              tpl = tplHeader + tplPost;
+              window.App = new editPostView(postId);
           },
           removePost:function(postId){
                 $.ajax({

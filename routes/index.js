@@ -90,6 +90,62 @@ module.exports = function (app) {
       })
       .catch(next)
 })
+
+
+app.post('/updatePost', function (req, res, next) {
+  req.ifAjax = true;
+  const postId = req.query.postId
+  const author = req.session.user._id
+  const title = req.fields.title
+  const content = req.fields.content
+
+  // 校验参数
+  try {
+    if (!title.length) {
+      throw new Error('请填写标题')
+    }
+    if (!content.length) {
+      throw new Error('请填写内容')
+    }
+  } catch (e) {
+    req.flash('error', e.message)
+    reqJson = {error:e.message};
+    res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+    res.write(JSON.stringify(reqJson));
+    res.end();
+    return;
+  }
+
+  PostModel.getRawPostById(postId)
+    .then(function (post) {
+      try{
+        if (!post) {
+          throw new Error('文章不存在')
+        }
+        if (post.author._id.toString() !== author.toString()) {
+          throw new Error('没有权限')
+        }
+      } catch(e) {
+        req.flash('error', e.message)
+        reqJson = {error:e.message};
+        res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+        res.write(JSON.stringify(reqJson));
+        res.end();
+        return;
+      }
+      
+      PostModel.updatePostById(postId, { title: title, content: content })
+        .then(function () {
+          req.flash('success', '编辑文章成功')
+          reqJson = {success:'编辑文章成功'};
+          res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+          res.write(JSON.stringify(reqJson));
+          res.end();
+          next();
+        })
+        .catch(next)
+    }).catch(next)
+})
   
   //删除一篇文章;
   app.get('/removePost', function (req, res, next) {

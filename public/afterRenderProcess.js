@@ -19,7 +19,7 @@ define([],function(){
             $('form.segment').submit(function(e){
                 e.preventDefault(); // This is important
                 
-
+                //其实这里更好的做法是直接让url跳转, 通过Backbone路由系统(router.js)来发送Ajax请求, 因为这样的设计才是高内聚的;
                 if(window.location.pathname == '/signin'){
                   var username = $('input[name = "name"]').val();
                   var userpassword = $('input[name = "password"]').val();
@@ -99,6 +99,30 @@ define([],function(){
                         var content = '<div class="ui success message"><p>' + data.success + '</p></div>';
                         $('.ui.grid:eq(1) .eight.wide.column').empty().append(content);
                         router.navigate('/posts?author=' + data.post.author, true);
+                      }
+                    }
+                  });
+
+                }else if(window.location.pathname.indexOf('edit') != -1){
+                    var startIndex = location.href.indexOf('posts/')+6;
+                    var endIndex = location.href.indexOf('/edit');
+                    var postId = window.location.href.slice(startIndex,endIndex);
+                    $.ajax({
+                    url: "/updatePost?postId=" +  postId, // Url to which the request is send
+                    type: "POST",             // Type of request to be send, called as method
+                    data: new FormData(this), // Data sent to server, a set of key/value pairs (i.e. form fields and values)
+                    contentType: false,       // The content type used when sending data to the server.
+                    cache: false,             // To unable request pages to be cached
+                    processData:false,        // To send DOMDocument or non processed data file it is set to false
+                    success: function(data)   // A function to be called if request succeeds
+                    {
+                      if(data && data.error){
+                        var content = '<div class="ui error message"><p>' + data.error + '</p></div>';
+                        $('.ui.grid:eq(1) .eight.wide.column').empty().append(content);
+                      }else if(data && data.success){
+                        var content = '<div class="ui success message"><p>' + data.success + '</p></div>';
+                        $('.ui.grid:eq(1) .eight.wide.column').empty().append(content);
+                        router.navigate('/posts?post=' + postId, true);
                       }
                     }
                   });

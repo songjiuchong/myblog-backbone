@@ -1,5 +1,5 @@
 # myblog-backbone
-myblog web app based on Backbone.js, Node.js(Express), semantic-ui and mongoDB.
+myblog web app based on Backbone.js, underscore.js, Node.js(Express), semantic-ui and mongoDB.
 
 In this branch(develop), all the settings of this reop are set to locally test this web app(http://localhost:3000) with local MongoDB used to save user data. 
 

@@ -85,3 +85,45 @@ div.errorPage {
     left: 30%;
     font-size: 45px;
 }
+
+/* ---------- warning window ---------- */
+
+div.warning {
+  display: none;
+  position: fixed;
+  top: 21%;
+  left: 35%;
+  font-size: 25px;
+  height:200px;
+  width: 400px;
+  background-color: yellow;
+  opacity: 0.8;
+}
+
+div.warning .confirm, div.warning .deny {
+  height: 35px;
+  width: 80px;
+  position: relative;
+  top: 36%;
+  cursor: pointer;
+}
+
+div.warning .warningContent {
+    position: relative;
+    top: 10%;
+    left: 15%;
+    line-height: 32px;
+    font-size: 25px;
+    max-width: 80%;
+}
+
+div.warning .confirm {
+    left: 20%;
+    float: left;
+}
+
+div.warning .deny {
+    right: 15%;
+    float: right;
+}
+

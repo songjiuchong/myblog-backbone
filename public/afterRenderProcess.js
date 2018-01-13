@@ -8,14 +8,19 @@ define([],function(){
                 e.preventDefault(); // This is important
                 var href = $(e.currentTarget).attr('href');
                 if(href.indexOf('remove') != -1){  //如果是删除操作先询问操作者;
-                    if(window.confirm('是否执行删除操作?')){
-                        router.navigate(href, true);
-                    }
-                    return;
+                  $('div.warning').fadeIn();
+                }else{
+                  router.navigate(href, true);
                 }
-                router.navigate(href, true); // <- this part will pass the path to your router
             });
-          
+            $('div.warning .confirm').on("click", function(e){
+                   var href = $(e.currentTarget).attr('href');
+                   router.navigate(href, true);
+                  });
+            $('div.warning .deny').on("click", function(e){
+                   $('div.warning').fadeOut();
+            });
+
             $('form.segment').submit(function(e){
                 e.preventDefault(); // This is important
                 

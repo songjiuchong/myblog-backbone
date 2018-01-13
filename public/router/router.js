@@ -111,7 +111,12 @@ define(['template/component/header','template/post','view/postView','template/cr
                 });
           },
           default:function(other){
-            alert('url:' + other + "doesn't exist at the moment!");
+                require(['template/component/header','template/404','view/404View'],function(header,template,view){
+                    var tplHeader  = header.html;
+                    var newTemplate  =  template.html;
+                    tpl = tplHeader + newTemplate;
+                    window.App = new view();
+                });
           }
         });
 

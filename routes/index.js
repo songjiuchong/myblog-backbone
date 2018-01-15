@@ -14,7 +14,6 @@ module.exports = function (app) {
   
   //获取登录用户的信息;
   app.get('/userKeyInfo',function(req, res, next){
-    req.ifAjax = true;
     reqJson = {};
 
     // 添加模板必需的三个变量;
@@ -25,13 +24,12 @@ module.exports = function (app) {
     res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
     res.write(JSON.stringify(reqJson));
     res.end();
-    next();
+    return next();
   })
   
   //获取某篇文章;
   app.get('/getPost', function (req, res, next) {
     const postId = req.query.postId;
-    req.ifAjax = true;
 
     PostModel.getPostById(postId)
       .then(function (post) {
@@ -40,14 +38,13 @@ module.exports = function (app) {
         res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
         res.write(JSON.stringify(reqJson));
         res.end();
-        next();
+        return next();
       })
       .catch(next)
   })
 
   //发表一篇文章;
   app.post('/createPost', function (req, res, next) {
-    req.ifAjax = true;
     const author = req.session.user._id
     const title = req.fields.title
     const content = req.fields.content
@@ -66,7 +63,7 @@ module.exports = function (app) {
           res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
           res.write(JSON.stringify(reqJson));
           res.end();
-          return;
+          return next();
     }
 
     let post = {
@@ -86,14 +83,13 @@ module.exports = function (app) {
         res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
         res.write(JSON.stringify(reqJson));
         res.end();
-        next();
+        return next();
       })
       .catch(next)
 })
 
 
 app.post('/updatePost', function (req, res, next) {
-  req.ifAjax = true;
   const postId = req.query.postId
   const author = req.session.user._id
   const title = req.fields.title
@@ -113,7 +109,7 @@ app.post('/updatePost', function (req, res, next) {
     res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
     res.write(JSON.stringify(reqJson));
     res.end();
-    return;
+    return next();
   }
 
   PostModel.getRawPostById(postId)
@@ -131,7 +127,7 @@ app.post('/updatePost', function (req, res, next) {
         res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
         res.write(JSON.stringify(reqJson));
         res.end();
-        return;
+        return next();
       }
       
       PostModel.updatePostById(postId, { title: title, content: content })
@@ -141,7 +137,7 @@ app.post('/updatePost', function (req, res, next) {
           res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
           res.write(JSON.stringify(reqJson));
           res.end();
-          next();
+          return next();
         })
         .catch(next)
     }).catch(next)
@@ -149,7 +145,6 @@ app.post('/updatePost', function (req, res, next) {
   
   //删除一篇文章;
   app.get('/removePost', function (req, res, next) {
-    req.ifAjax = true;
     const postId = req.query.postId
     const author = req.session.user._id
 
@@ -168,7 +163,7 @@ app.post('/updatePost', function (req, res, next) {
           res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
           res.write(JSON.stringify(reqJson));
           res.end();
-          return;
+          return next();
       }
         PostModel.delPostById(postId)
           .then(function () {
@@ -178,7 +173,7 @@ app.post('/updatePost', function (req, res, next) {
             res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
             res.write(JSON.stringify(reqJson));
             res.end();
-            next();
+            return next();
           })
           .catch(next)
       }).catch(next)
@@ -187,8 +182,6 @@ app.post('/updatePost', function (req, res, next) {
   //获取某篇文章的所有评论;
   app.get('/getComments', function (req, res, next) {
     const postId = req.query.postId;
-    req.ifAjax = true;
-
     CommentsModel.getComments(postId)
       .then(function (comments) {
         reqJson = {};
@@ -196,7 +189,7 @@ app.post('/updatePost', function (req, res, next) {
         res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
         res.write(JSON.stringify(reqJson));
         res.end();
-        next();
+        return next();
       })
       .catch(next)
   })
@@ -206,7 +199,6 @@ app.post('/updatePost', function (req, res, next) {
   const author = req.session.user._id
   const postId = req.fields.postId
   const content = req.fields.content
-  req.ifAjax = true;
 
     // 校验参数
     try {
@@ -219,7 +211,7 @@ app.post('/updatePost', function (req, res, next) {
           res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
           res.write(JSON.stringify(reqJson));
           res.end();
-          return;
+          return next();
     }
 
     const comment = {
@@ -236,14 +228,13 @@ app.post('/updatePost', function (req, res, next) {
         res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
         res.write(JSON.stringify(reqJson));
         res.end();
-        next();
+        return next();
       })
       .catch(next)
   })
   
   //删除评论;
   app.get('/removeComment',function(req, res, next){
-    req.ifAjax = true;
     const commentId = req.query.commentId;
     const author = req.session.user._id;
 
@@ -258,24 +249,20 @@ app.post('/updatePost', function (req, res, next) {
       CommentsModel.delCommentById(commentId)
         .then(function () {
           req.flash('success', '删除留言成功')
-          // 删除成功后跳转到上一页
-          res.redirect('back')
+          reqJson = {};
+          reqJson = {success:'删除留言成功'};
+          res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+          res.write(JSON.stringify(reqJson));
+          res.end();
+          return next();
         })
         .catch(next)
     }).catch(next)
 
-    reqJson = {};
-    req.flash('success', '留言已删除');
-    reqJson = {success:'留言已删除'};
-    res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
-    res.write(JSON.stringify(reqJson));
-    res.end();
-    next();
   })
 
   app.get('/getPosts', function (req, res, next) {
     const author = req.query.author
-    req.ifAjax = true;
 
     PostModel.getPosts(author)
       .then(function (posts) {
@@ -284,7 +271,7 @@ app.post('/updatePost', function (req, res, next) {
         res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
         res.write(JSON.stringify(reqJson));
         res.end();
-        next();
+        return next();
       })
       .catch(next)
   })
@@ -292,7 +279,6 @@ app.post('/updatePost', function (req, res, next) {
   app.post('/validateSignin', function (req, res, next) {
       const name = req.fields.name
       const password = req.fields.password
-      req.ifAjax = true;
 
       UserModel.getUserByName(name)
       .then(function (user) {
@@ -302,14 +288,14 @@ app.post('/updatePost', function (req, res, next) {
           res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
           res.write(JSON.stringify(reqJson));
           res.end();
-          return; //这里必须return, 不然会继续执行之后的内容从而报错: TypeError: Cannot read property 'password' of null;
+          return next(); //这里必须return, 不然会继续执行之后的内容从而报错: TypeError: Cannot read property 'password' of null;
         }else if (sha1(password) !== user.password) {
           req.flash('error', '用户名或密码错误')
           reqJson = {error:'用户名或密码错误'};
           res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
           res.write(JSON.stringify(reqJson));
           res.end();
-          return;
+          return next();
         }else{
           req.flash('success', '登录成功')
           // 用户信息写入 session
@@ -319,7 +305,7 @@ app.post('/updatePost', function (req, res, next) {
           res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
           res.write(JSON.stringify(reqJson));
           res.end();
-          next();
+          return next();
         }
       })
       .catch(next)
@@ -332,7 +318,6 @@ app.post('/updatePost', function (req, res, next) {
       const avatar = req.files.avatar.path.split(path.sep).pop()
       let password = req.fields.password
       const repassword = req.fields.repassword
-      req.ifAjax = true;
       
       // 校验参数
       try {
@@ -353,7 +338,7 @@ app.post('/updatePost', function (req, res, next) {
           res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
           res.write(JSON.stringify(reqJson));
           res.end();
-          return;
+          return next();
       }
 
       // 明文密码加密
@@ -382,7 +367,7 @@ app.post('/updatePost', function (req, res, next) {
             res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
             res.write(JSON.stringify(reqJson));
             res.end();
-            next();
+            return next();
           })
           .catch(function (e) {
             // 注册失败，异步删除上传的头像
@@ -394,13 +379,13 @@ app.post('/updatePost', function (req, res, next) {
               res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
               res.write(JSON.stringify(reqJson));
               res.end();
+              return next();
             }
             next(e)
       })
   })
 
   app.get('/validateSignout', function (req, res, next) {
-    req.ifAjax = true;
     // 清空 session 中用户信息
     req.session.user = null
     req.flash('success', '登出成功')
@@ -408,27 +393,25 @@ app.post('/updatePost', function (req, res, next) {
     res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
     res.write(JSON.stringify(reqJson));
     res.end();
-    next();
+    return next();
   })
 
 
   //For get source page;
   app.use(function (req, res, next) {
-      if(!req.ifAjax){
-        var clientui = require('fs').readFileSync('views/myblogIni.html');
-        //cors settings;   
-        // var origin = (req.headers.origin || "*");  
-        // res.setHeader('Access-Control-Allow-Credentials', true); 
-        // res.setHeader('Access-Control-Allow-Origin', origin);     
-        // res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-        // res.setHeader('Access-Control-Allow-Headers','accept, content-type');
-        
-        res.writeHead(200,{'Content-Type':'text/html;charset=utf-8;'}); //注意, 如果这里不添加charset=utf-8响应, 页面会显示中文乱码;
-        res.write(clientui);
-        res.end();
-        // res.writeHead(404);
-        // res.end();
+      if (!res.headersSent) {
+          var clientui = require('fs').readFileSync('views/myblogIni.html');
+          //cors settings;   
+          // var origin = (req.headers.origin || "*");  
+          // res.setHeader('Access-Control-Allow-Credentials', true); 
+          // res.setHeader('Access-Control-Allow-Origin', origin);     
+          // res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+          // res.setHeader('Access-Control-Allow-Headers','accept, content-type');
+          
+          res.writeHead(200,{'Content-Type':'text/html;charset=utf-8;'}); //注意, 如果这里不添加charset=utf-8响应, 页面会显示中文乱码;
+          res.write(clientui);
+          res.end();
+          return next();
       }
-      next();
   })
 }

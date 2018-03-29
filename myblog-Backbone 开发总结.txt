@@ -18,7 +18,7 @@ require.js的入口文件, 在加载完requirejs的主代码后会立即加载ma
 
 public/router/router.js;
 
-定义了路由规则:
+定义了前端路由规则:
       '':'init',
             'posts':'posts',
             'posts?author=:authorid':'posts',
@@ -39,7 +39,7 @@ public/router/router.js;
                   tpl = tplHeader + tplPosts;
                   window.App = new blogView(authorid);
               });
-取出了template模块中的html属性中定义的字符串, 拼接header和内容部分的html字符串将其赋值给全局变量tpl, 然后初始化待加载的视图对象,同时传入一些关键参数给视图模块的initialize函数;
+取出了template模块中的html文件中定义的字符串, 拼接header和内容部分的html字符串将其赋值给全局变量tpl, 然后初始化待加载的视图对象,同时传入一些关键参数给视图模块的initialize函数;
 
 
 public/view/404View.js
@@ -65,7 +65,7 @@ public/afterRenderProcess.js
 
 afterRenderProcess模块返回一个函数, 这个函数将首先利用e.preventDefault();禁止所有<a>链接的默认行为(单页面项目不能通过a链接跳转并刷新页面), 根据a链接的href属性获取到其目标url后使用Backbone提供的router.navigate(href, true); 来让跳转的地址通过Backbone单页面路由系统来处理; 并且指定了a链接如果指向一个删除操作(删除评论或者删除文章), 那么将会弹出询问框询问用户是否继续操作, 用户确认继续才会执行删除; 
 接着, 指定了表单中submit按钮的行为: 取消默认跳转行为, 用户点击后前端来验证表单中各个项的有效性, 如果全部符合发送请求的格式要求则通过Ajax发送表单请求, 一旦Ajax请求响应成功则使用router.navigate()跳转到某个指定的url; 
-需要注意的是, 这里表单submit按钮对应的提交请求其实可以在此处拦截(就是取消默认行为)然后重新发送指定url的请求通过Backbone路由系统(router.js)再来发送Ajax请求更好, 因为这样的设计才是高内聚的;
+需要注意的是, 这里表单submit按钮对应的提交请求其实可以不以submit的形式请求, 而是通过类似删除评论按钮这样的方式跳转到指定url然后通过Backbone的前端路由系统(router.js)来发送Ajax请求更好, 因为这样的设计才是高内聚的;
 最后设置延时清除掉成功、失败提示信息的代码和semantic框架需要对指定元素行为设置的js代码;
 
 
@@ -147,7 +147,7 @@ index.js;
 
 router/index.js;
 
-后端路由文件, 主要用来接收和处理Ajax请求, 如果请求不符合任何Ajax请求的路径并且未设置并发送任何响应header就默认是获取项目的主页面’/posts’, 返回主页面.html文件给浏览器:
+后端路由文件, 主要用来接收和处理Ajax请求, 如果请求不符合任何Ajax请求的路径并且未设置,发送任何响应header就默认是获取项目的主页面’/posts’, 返回主页面.html文件给浏览器:
 app.use(function (req, res, next) {
       if (!res.headersSent) {
           var clientui = require('fs').readFileSync('views/myblogIni.html');          
@@ -193,5 +193,76 @@ TODO:
 1.在myblog-backbone中直接加载页面: http://localhost:3000/posts/create 会报错:Unexpected token < 并且无法加载main.js, 
 这可能是由于requirejs加载main.js的地址为: "http://localhost:3000/posts/main.js" 从而找不到这个文件而导致的, 原因是当前页面的地址在/posts后又添加了子路径/create, 如果没有子路径或者只使用’?…’query字符串的形式就不会有这个问题; 
 参考: https://stackoverflow.com/questions/19682610/requirejs-does-not-follow-relative-path-for-data-main-with-baseurl-set
+
 2.在点击链接时某些时刻可能会出现: Error: Can't set headers after they are sent 这样的后端报错, 这可能与node的版本有关, 也可能是因为在调用next()方法前没有使用return;
 参考: https://cnodejs.org/topic/53774ffecbcc396349ca1155
+
+3.目前此项目的架构在一定程度上还存在用户验证问题, 因为通过Backbone的前端路由无论访问哪个页面的渲染过程都是: 获取对应template中的内容, 初始化相应的view对象, 使用_.template生成对应的模板, 将模板所需的数据通过相关的model/collection模块fetch到客户端, 将异步获取的数据整合到一个对象中并传入模板渲染页面; 一般情况下这样是没有问题的, 因为模板基本都会根据传入的数据对象中是否有user信息来判断应该如何渲染用户在登录/未登录情况下显示不同内容的部分, 除了如: 编辑文章, 创建文章等页面的文章部分缺少了这样的验证, 也就是说无论用户是否处于登录状态都会显示创建/编辑文字的部分, 这显然是存在问题的; 但是由于编辑/创建文章的按钮本身在渲染时存在逻辑会判断模板数据中的user属性是否存在, 只有登录状态下的用户才能看到这两个按钮; 但是还可能存在这样的特殊情况: 用户不通过按钮而是直接在地址栏输入创建/编辑文章页面的url, 这样就会出现问题; 又或者用户在登录状态下进入了文章页面, 所以可以点击编辑/创建文章的按钮, 但是由于在页面中停留了过长的时间导致cookie过期, 那么此时再去点击按钮也会引发问题;
+其实, 每一个view模块中都会新建一个blogUser对象(model模块), 然后向服务器的'/userKeyInfo'发送请求fetch用户相关的信息, 这样在render模板时就能将用户信息做为数据传入, 问题是后端的这个API并不会判断当前用户请求的cookie中是否包含了登录信息, 而是直接将req.session.user(Express的express-session插件会处理请求中的cookie)赋值给reqJson.user然后返回给浏览器, 也就是说浏览器很可能接收一个空的user对象, 然后将其作为数据render模板, 这显然是有问题的;
+
+而在之前使用Nodejs+ejs模板的非单页面项目中由于设置了middlewares/check.js这个中间件, 任何Ajax请求都需要通过类似:
+// GET /posts/create 发表文章页
+router.get('/create', checkLogin, function (req, res, next) {
+  res.render('create')
+})
+
+这样的方式来判断用户当前是否已经登录, 如果没有登录就会被强制跳转并在模板中添加错误信息:
+
+check.js;
+......
+checkLogin: function checkLogin (req, res, next) {
+    if (!req.session.user) {
+      req.flash('error', '未登录')
+      return res.redirect('/signin')
+    }
+    next()
+  }
+......
+
+通过这种方式, 之前的这个非单页面项目可以很方便的验证用户访问某个页面的权限, 并加以控制;
+
+那么回到Backbone的这个项目中, 最好的改进用户验证的方式就是在myblog-backbone/public/router/router.js中统一设置一个通过Ajax验证当前用户是否已经登录的拦截方法, 在每一次前端路由触发时就对需要权限控制的路由先进行验证, 如果通过才能继续创建视图对象, 如果没有通过就跳转到登录页面; 如果是那些可以同时以登录/非登录状态访问的页面那就直接通过并创建视图对象, 因为视图对象的创建过程中本身还存在利用blogUser对象获取用户登录信息再渲染页面的步骤; 并且通过这样的方式也可以避免用户在登录状态下cookie过期但仍旧可以请求那些需要登录验证的地址;
+
+4.在myblog-Backbone这个项目中, 在服务器端使用的connect-flash中间件是无用的(包括middlewares文件夹中的check.js自定义中间件), 是之前开发的nodejs+ejs非单页面myblog项目中遗留下来的, 由于之前这个项目的视图模板在服务器端生成, nodejs的Express中通过传值给app.locals能直接让ejs模板拿到定义的数据, 所以使用了:
+
+app.use(function (req, res, next) {
+  res.locals.user = req.session.user
+  res.locals.success = req.flash('success').toString()
+  res.locals.error = req.flash('error').toString()
+  next()
+})
+
+这样的中间件在每次服务器接收请求后会将上一次请求时通过: req.flash('success', '删除文章成功') 这种形式在flash中保存的值取出:
+req.flash('success') , 取出的值会自动被删除了, 并把值传递给res.locals, 从而在ejs模板中使用; 也就是说取出flash中保存的值比在其中设置值要晚一次请求, 这是由于这个项目设置的flash都是成功/报错信息, 都是在页面重定向后显示在新页面中的信息, 所以需要在下一次请求后放到ejs模板中再响应给浏览器显示;
+而在Backbone这个项目中, 在routes/index.js中存在大量类似:
+
+req.flash('error', e.message);
+reqJson = {error:e.message};
+res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+res.write(JSON.stringify(reqJson));
+res.end();
+
+这样的代码, 这显然也是有问题的, 其实只需要reqJson = {error:e.message};这句就行了, 设置req.flash会扰乱下一次请求时blogUser模块对象fetch后取得的返回数据, 因为
+'/userKeyInfo' API返回: 
+
+reqJson.user = res.locals.user;
+reqJson.success = res.locals.success;
+reqJson.error = res.locals.error;
+res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
+res.write(JSON.stringify(reqJson));
+res.end();
+
+而之前在中间件中:
+app.use(function (req, res, next) {
+  res.locals.user = req.session.user
+  res.locals.success = req.flash('success').toString()
+  res.locals.error = req.flash('error').toString()
+  next()
+})
+
+所以blogUser返回的success和error也是有问题的, 需要删除'/userKeyInfo' API返回的这两个属性;
+
+总的来说, 就是需要删除Backbone项目中所有与flash中间件有关的代码, 并且res.locals相关的使用也不需要了;
+
+
+

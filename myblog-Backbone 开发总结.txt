@@ -197,10 +197,10 @@ TODO:
 2.在点击链接时某些时刻可能会出现: Error: Can't set headers after they are sent 这样的后端报错, 这可能与node的版本有关, 也可能是因为在调用next()方法前没有使用return;
 参考: https://cnodejs.org/topic/53774ffecbcc396349ca1155
 
-3.目前此项目的架构在一定程度上还存在用户验证问题, 因为通过Backbone的前端路由无论访问哪个页面的渲染过程都是: 获取对应template中的内容, 初始化相应的view对象, 使用_.template生成对应的模板, 将模板所需的数据通过相关的model/collection模块fetch到客户端, 将异步获取的数据整合到一个对象中并传入模板渲染页面; 一般情况下这样是没有问题的, 因为模板基本都会根据传入的数据对象中是否有user信息来判断应该如何渲染用户在登录/未登录情况下显示不同内容的部分, 除了如: 编辑文章, 创建文章等页面的文章部分缺少了这样的验证, 也就是说无论用户是否处于登录状态都会显示创建/编辑文字的部分, 这显然是存在问题的; 但是由于编辑/创建文章的按钮本身在渲染时存在逻辑会判断模板数据中的user属性是否存在, 只有登录状态下的用户才能看到这两个按钮; 但是还可能存在这样的特殊情况: 用户不通过按钮而是直接在地址栏输入创建/编辑文章页面的url, 这样就会出现问题; 又或者用户在登录状态下进入了文章页面, 所以可以点击编辑/创建文章的按钮, 但是由于在页面中停留了过长的时间导致cookie过期, 那么此时再去点击按钮也会引发问题;
-其实, 每一个view模块中都会新建一个blogUser对象(model模块), 然后向服务器的'/userKeyInfo'发送请求fetch用户相关的信息, 这样在render模板时就能将用户信息做为数据传入, 问题是后端的这个API并不会判断当前用户请求的cookie中是否包含了登录信息, 而是直接将req.session.user(Express的express-session插件会处理请求中的cookie)赋值给reqJson.user然后返回给浏览器, 也就是说浏览器很可能接收一个空的user对象, 然后将其作为数据render模板, 这显然是有问题的;
+3.目前此项目的架构在一定程度上还存在用户验证问题, 因为通过Backbone的前端路由无论访问哪个页面的渲染过程都是: 根据地址栏路径匹配Backbone.Router对象实例中配置的路由, 在匹配路由对应的处理函数中获取待访问页面相关template中的html内容放入全局变量tpl中, 初始化相应的view对象, 使用_.template函数将全局变量tpl做为参数生成对应的模板, 将模板所需的数据通过相关的model/collection模块fetch到客户端, 将异步获取的数据整合到一个对象中并传入模板渲染页面; 一般情况下这样是没有问题的, 因为模板基本都会根据传入的数据对象中是否有user信息来判断应该如何渲染用户在登录/未登录情况下显示不同内容的部分, 除了如: 编辑文章, 创建文章等页面的文章部分缺少了这样的验证, 也就是说无论用户是否处于登录状态都会显示创建/编辑文章的部分, 这显然是存在问题的; 但是由于编辑/创建文章的按钮本身在渲染时存在逻辑会判断模板数据中的user属性是否为空, 只有登录状态下的用户才能看到这两个按钮; 但是还可能存在这样的特殊情况: 用户不通过按钮而是直接在地址栏输入创建/编辑文章页面的url, 这样就会出现问题; 又或者用户在登录状态下进入了文章页面, 所以可以点击编辑/创建文章的按钮, 但是由于在页面中停留了过长的时间导致cookie过期, 那么此时再去点击按钮也会引发问题; 包括用户在登录状态下进入了编辑/创建文章的页面, 但是在点击提交按钮前由于cookie已经过期所以提交时已经不处于登录状态这样的问题;
+其实, 每一个view模块中都会新建一个blogUser对象(model模块), 然后向服务器的'/userKeyInfo'发送请求来fetch用户相关的信息, 这样在render模板时就能将用户信息做为数据传入, 后端的这个API并不会判断当前用户请求的cookie中是否包含了登录信息, 而是直接将req.session.user(Express的express-session插件会处理请求中的cookie)赋值给reqJson.user然后返回给浏览器, 也就是说浏览器很可能接收一个空的user对象, 然后将其作为数据render模板, 前端的template中会去根据传入数据中user属性是否为空来渲染登录/非登录状态下的页面内容; 所以说后端的这个验证用户登录状态的API是没有问题的, 关键需要在前端某个环节中添加拦截验证(后面会提到);
 
-而在之前使用Nodejs+ejs模板的非单页面项目中由于设置了middlewares/check.js这个中间件, 任何Ajax请求都需要通过类似:
+而在之前使用Nodejs+ejs模板的非单页面项目中由于设置了middlewares/check.js这个中间件, 任何需要权限的Ajax请求都需要通过类似:
 // GET /posts/create 发表文章页
 router.get('/create', checkLogin, function (req, res, next) {
   res.render('create')
@@ -223,7 +223,8 @@ checkLogin: function checkLogin (req, res, next) {
 
 那么回到Backbone的这个项目中, 最好的改进用户验证的方式就是在myblog-backbone/public/router/router.js中统一设置一个通过Ajax验证当前用户是否已经登录的拦截方法, 在每一次前端路由触发时就对需要权限控制的路由先进行验证, 如果通过才能继续创建视图对象, 如果没有通过就跳转到登录页面; 如果是那些可以同时以登录/非登录状态访问的页面那就直接通过并创建视图对象, 因为视图对象的创建过程中本身还存在利用blogUser对象获取用户登录信息再渲染页面的步骤; 并且通过这样的方式也可以避免用户在登录状态下cookie过期但仍旧可以请求那些需要登录验证的地址;
 
-4.在myblog-Backbone这个项目中, 在服务器端使用的connect-flash中间件是无用的(包括middlewares文件夹中的check.js自定义中间件), 是之前开发的nodejs+ejs非单页面myblog项目中遗留下来的, 由于之前这个项目的视图模板在服务器端生成, nodejs的Express中通过传值给app.locals能直接让ejs模板拿到定义的数据, 所以使用了:
+
+4.在myblog-Backbone这个项目中, 在服务器端使用的connect-flash中间件是无用的(middlewares文件夹中的check.js自定义中间件也无须再使用), 是之前开发的nodejs+ejs非单页面myblog项目中遗留下来的, 由于之前这个项目的视图模板在服务器端生成, nodejs的Express中通过传值给app.locals能直接让ejs模板拿到定义的数据, 所以使用了:
 
 app.use(function (req, res, next) {
   res.locals.user = req.session.user
@@ -233,7 +234,7 @@ app.use(function (req, res, next) {
 })
 
 这样的中间件在每次服务器接收请求后会将上一次请求时通过: req.flash('success', '删除文章成功') 这种形式在flash中保存的值取出:
-req.flash('success') , 取出的值会自动被删除了, 并把值传递给res.locals, 从而在ejs模板中使用; 也就是说取出flash中保存的值比在其中设置值要晚一次请求, 这是由于这个项目设置的flash都是成功/报错信息, 都是在页面重定向后显示在新页面中的信息, 所以需要在下一次请求后放到ejs模板中再响应给浏览器显示;
+通过req.flash('success') 这样的方法取出的值会自动被删除了, 然后把值传递给res.locals, 从而在ejs模板中使用; 也就是说取出flash中保存的值比在其中设置值要晚一次请求, 这是由于这个项目设置的flash都是成功/报错信息, 都是在页面重定向后显示在新页面中的信息, 所以需要在下一次请求后放到ejs模板中再响应给浏览器显示;
 而在Backbone这个项目中, 在routes/index.js中存在大量类似:
 
 req.flash('error', e.message);

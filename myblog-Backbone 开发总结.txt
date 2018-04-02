@@ -221,8 +221,8 @@ checkLogin: function checkLogin (req, res, next) {
 
 通过这种方式, 之前的这个非单页面项目可以很方便的验证用户访问某个页面的权限, 并加以控制;
 
-那么回到Backbone的这个项目中, 最好的改进用户验证的方式就是在myblog-backbone/public/router/router.js中统一设置一个通过Ajax验证当前用户是否已经登录的拦截方法, 在每一次前端路由触发时就对需要权限控制的路由先进行验证(比如: posts_create, editPost, removePost, removeComment), 对于: posts_create, editPost这两个需要新建视图的页面, 如果通过才能继续创建视图对象, 如果没有通过就跳转到登录页面并显示错误提示(由于需要在回到登录页面后显示错误提示, 所以可以不使用直接跳转而是新建signin视图的方法, 将错误提示做为参数传入, 然后在signin视图中渲染页面时将错误提示传入模板显示出来), 对于: removePost, removeComment这样通过前端路由来转发ajax请求的情况, 如果通过验证就显示正确信息并且立刻跳转到相应页面, 如果没有通过验证就直接在当前页面中显示错误信息, 无效跳转或重新创建视图(为了不让用户丢失以及编辑或新建的文章内容, 评论内容, 注册内容); 如果是那些可以同时以登录/非登录状态访问的页面那就直接通过并创建视图对象, 因为视图对象的创建过程中本身还存在利用blogUser对象获取用户登录信息再渲染页面的步骤; 
-对于那些不会经过前端路由并且需要用户登录权限才能操作的ajax请求, 如: createPost, updatePost, createComment, 需要在后端先验证用户登录权限, 如果已经登录则返回一个正确码以及提示内容, 前端在页面显示提示信息, 然后跳转; 如果后端验证用户未登录, 那么返回一个错误码以及错误提示, 前端在页面中显示错误提示, 无须跳转(为了不让用户丢失以及编辑或新建的文章内容, 评论内容, 注册内容); 这样也防止了在没有权限的情况下直接访问某个后端API来修改用户数据的情况; 还需要注意的是, 在一些需要登录权限的ajax请求中, 虽然使用了如下的方式来验证权限:
+那么回到Backbone的这个项目中, 最好的改进用户验证的方式就是在myblog-backbone/public/router/router.js中统一设置一个通过Ajax验证当前用户是否已经登录的拦截方法, 在每一次前端路由触发时就对需要权限控制的路由先进行验证(比如: posts_create, editPost, removePost, removeComment), 对于: posts_create, editPost这两个需要新建视图的页面, 如果通过才能继续创建视图对象, 如果没有通过就跳转到登录页面并显示错误提示(由于需要在回到登录页面后显示错误提示, 所以可以不使用直接跳转而是新建signin视图的方法, 将错误提示做为参数传入, 然后在signin视图中渲染页面时将错误提示传入模板显示出来), 对于: removePost, removeComment这样通过前端路由来转发ajax请求的情况, 直接将请求发送到服务器端, 由服务器的API来验证用户权限, 前端接收到返回验证通过的信息则显示正确message并且立刻跳转到相应页面, 如果没有通过验证就直接在当前页面中显示错误信息, 无需跳转或重新创建视图(为了不让用户丢失以及编辑或新建的文章内容, 评论内容, 注册内容); 如果是那些可以同时以登录/非登录状态访问的页面那就直接通过并创建视图对象, 因为视图对象的创建过程中本身还存在利用blogUser对象获取用户登录信息再渲染页面的步骤; 
+对于那些不会经过前端路由并且需要用户登录权限才能操作的ajax请求, 如: createPost, updatePost, createComment, 需要在后端API先验证用户登录权限, 如果已经登录则返回一个正确码以及提示内容, 前端在页面显示提示信息, 然后跳转; 如果后端验证用户未登录, 那么返回一个错误码以及错误提示, 前端在页面中显示错误提示, 无须跳转(为了不让用户丢失以及编辑或新建的文章内容, 评论内容, 注册内容); 这样也防止了在没有权限的情况下直接访问某个后端API来修改用户数据的情况; 还需要注意的是, 在一些需要登录权限的ajax请求中, 虽然使用了如下的方式来验证权限:
 
 const author = req.session.user._id
 
@@ -232,8 +232,8 @@ if (post.author._id.toString() !== author.toString()) {
 
 但是由于如果不先验证登录信息, 那么req.session.user._id这条语句本身就会报错, 因为req.session.user是空的; 
 
-其它的那些后端API, 如: getPost, getPosts, getComments, 由于不是修改用户数据的请求, 而且请求内容本身就是公开的, 所以可以不验证直接返回内容;
-通过上面的一系列改造方案, 也同时可以避免用户在登录状态下cookie过期但仍旧可以请求那些需要登录才能访问的页面或者API;
+其它的那些后端API, 如: getPost, getPosts, getComments, 由于不是在数据库中更新用户数据的请求, 而且请求内容本身就是公开的, 所以可以不验证直接返回内容;
+通过上面的一系列改造方案, 可以避免用户在登录状态下cookie过期但仍旧可以请求那些需要登录才能访问的页面或者API;
 
 
 4.在myblog-Backbone这个项目中, 在服务器端使用的connect-flash中间件是无用的(middlewares文件夹中的check.js自定义中间件也无须再使用), 是之前开发的nodejs+ejs非单页面myblog项目中遗留下来的, 由于之前这个项目的视图模板在服务器端生成, nodejs的Express中通过传值给app.locals能直接让ejs模板拿到定义的数据, 所以使用了:
@@ -255,7 +255,7 @@ res.writeHead(200,{'Content-Type':'application/json;charset=utf-8;'});
 res.write(JSON.stringify(reqJson));
 res.end();
 
-这样的代码, 这显然也是有问题的, 其实只需要reqJson = {error:e.message};这句就行了, 设置req.flash会扰乱下一次请求时blogUser模块对象fetch后取得的返回数据, 因为
+这样的代码, 这显然也是有问题的, req.flash('error', e.message);这句需要删除, 设置req.flash会扰乱下一次请求时blogUser模块对象fetch后取得的返回数据, 因为
 '/userKeyInfo' API返回: 
 
 reqJson.user = res.locals.user;
@@ -373,13 +373,63 @@ app.use(function (req, res, next) {
 
         require(['router/router'],function(newRouter){
             router = newRouter;
-            Backbone.history.start({pushState: true}); //必须在定义了router之后才能开始监听, 不然监听的规则与router设置无关;
+            Backbone.history.start({pushState: true}); //必须在实例化了Backbone.Router对象之后才能开始监听, 不然监听的规则与router设置无关;
         });
 
-中的router = newRouter;语句删除, 因为一旦依赖了router/router.js就会创建一个新的Backbone的router实例:
+中的router = newRouter;语句删除, 因为一旦依赖了router/router.js就会创建一个新的Backbone.Router实例:
 var newRouter = new router();
 Backbone.history.start方法执行后就会自动以这个新建的router实例对象中的配置做为路由匹配的依据;
 由于已经定义了newRouter变量, 在全局中可以直接使用newRouter.navigate方法来进行路由跳转了, 所以之后使用router.navigate的地方需要相应地改为newRouter.navigate;
+
+
+7.前后端错误处理(这里的错误指的不是用户权限相关或者文章不存在等后端与数据库正常交互后返回错误信息这样的错误, 而是前端访问API失败, 或者后端数据库读取失败这样的不可预测错误);
+
+目前在项目中并不存在一个错误页面(404页面除外)让前端model在fetch数据失败时, 或者在后端与数据库交互失败时在前端显示错误信息;
+
+对于之前的node.js+ejs项目来说, 在后端发生的所有的数据库相关错误最后都被以类似:
+
+router.get('/', function (req, res, next) {
+  const author = req.query.author
+
+  PostModel.getPosts(author)
+    .then(function (posts) {
+      res.render('posts', {
+        posts: posts
+      })
+    })
+    .catch(next)
+})
+
+这样的形式将错误信息传递到之后的错误日志记录和错误处理中间件中:
+
+//错误处理中间件(只要next方法传入参数, 就默认是错误对象, 之后的中间件就可以使用第一个参数来接收它);
+app.use(function (err, req, res, next) {
+  console.error(err)
+  req.flash('error', err.message)
+  res.redirect('/posts')
+})
+
+问题也很明显, 如果是请求'/posts'时发生的错误将会形成死循环; 所以必须新建一个无需与数据库发生交互的, 只用来显示错误信息的错误页面, 以此在前端告诉用户发生的错误是后端本身造成的, 而不是用户的权限, 填写信息不符合规范或者请求了一个不存在的资源而造成的;
+
+那么回到Backbone这个项目中, 后端所使用的错误处理方式是之前遗留下来的, 当然也需要相应改造, 但是与之前项目不同的是, 当用户的post请求(如: createPost, updatePost, removePost, createComment, removeComment)在后端发生数据库相关错误时不能直接跳转到错误页面, 为了不让用户丢失以及编辑或新建的文章内容, 评论内容, 注册内容, 应该先在.catch()中对res对象传入一个标识符再将错误对象传入next方法, 之后的错误处理中间件中就可以根据这个res对象中保存的标识符来判断是直接让页面跳转到错误页面(错误信息可以做为查询字符串添加在url中, 这样前端路由就可以根据错误信息来新建错误页面的view实例了), 还是正常返回给页面一个带有报错信息的JSON字符串, 让前端在不重新render页面的情况下直接显示错误信息;
+对于Backbone项目的前端部分来说, 需要新创建一个错误页面的view模块来配合后端错误处理中间件中发出的跳转响应, 并且在路由中添加相关逻辑;
+对于在前端的view模块中的一些fetch操作, 如:
+
+            var blogUserDone = new Promise(function(resolve, reject){
+                newModel.fetch({
+                        success:function(model,response,options){
+                            resolve('blogUserDone');
+                        },
+                        error:function(error){
+                            //前端报错通过ajax传到后端, 后端接收后使用next()传递给错误处理中间件; 
+                        }
+                });
+            });
+
+由于后端已经改造, 并且这些model的fetch方法都是get请求而非post请求, 所以如果后端发生错误就会让前端跳转到错误页面, 那么这里的error回调函数处理的其实是fetch方法根本无法将请求发送到服务器(无法连接服务器)这样的错误, 所以这里的处理方式同样是跳转到错误页面, 通过前端路由创建错误页面视图, 并把相关错误信息显示出来;
+上例中提到的: //前端报错通过ajax传到后端, 后端接收后使用next()传递给错误处理中间件; 
+这样的方法显然需要废弃;
+
 
 
 
